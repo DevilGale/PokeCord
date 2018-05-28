@@ -1,20 +1,33 @@
+from MainVars import *
+from PokeObj import *
+
 
 class user:
-	def __init__(self, user):
+    def __init__(self, user, poke):
         self.user = user
-        self.pokeList = {}
+        self.pokeList = {poke['name'] : [PokeObj(poke)]}
         self.items = []
 
+    @property
+    def items(self):
+        return self._items
+    
     @items.setter
     def items(self, value):
-        self._items.append(value)
-
-    @pokeList.setter
-    def pokeList(self, value):
-        if value['name'] in self._pokeList:
-            self._pokeList[value['name']].append(value)
+        print(value)
+        if value == []:
+            self._items = []
         else:
-            self._pokeList[value['name']] = [value]
+            self._items.append(value)
+
+    def getPokeList(self):
+        return self.pokeList.keys()
+    
+    def addPokeList(self, value):
+        if value['name'] in self.pokeList.keys():
+            self.pokeList[value['name']].append(value)
+        else:
+            self.pokeList[value['name']] = [value]
 
     def removePokemon(self, name):
         if name in self.pokeList.keys():

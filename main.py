@@ -8,10 +8,11 @@ async def on_ready():
     print('Logged in as ' + client.user.name + "(ID: " + client.user.id + ")")
     print('~~~~~~~~~~~~')
     async for message in client.logs_from(client.get_channel(CHANNEL_IDs), limit=2):
-        if message.content == "Restarting...":
-            await client.edit_message(message, "Restarted!")
-        if message.content == (BOT_PREFIX + "restart"):
-            await client.add_reaction(message, '👌')
+        if (datetime.utcnow() - message.timestamp).total_seconds() <= 30:
+            if message.content == "Restarting...":
+                await client.edit_message(message, "Restarted!")
+            if message.content == (BOT_PREFIX + "restart"):
+                await client.add_reaction(message, '👌')
 
 @client.event
 async def on_message(message):

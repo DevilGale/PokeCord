@@ -1,14 +1,18 @@
 import os
 import sys
+import time
+import random
 import asyncio
 import discord
-import datetime
+from datetime import datetime
 
 # api #
 import requests
+from PIL import Image
+from io import BytesIO
 from imgurpython import ImgurClient
 
-from var_secrets.py import *
+from var_secrets import *
 
 # DISCORD  VARS #
 client = discord.Client()

@@ -1,16 +1,11 @@
-import requests
-import random
-import time
-from PIL import Image
-from io import BytesIO
-
 from MainVars import *
-
+from user import *
 
 class PokeCord:
     def __init__(self):
         self.pokestore = None
         self.imgr_results = None
+        self.users_list = {}
 
     @property    
     def appeared(self):
@@ -94,6 +89,10 @@ class PokeCord:
             embed.set_thumbnail(url="https://play.pokemonshowdown.com/sprites/xyani/{}.gif".format(self.pokestore['name']))
             # await client.send_message(message.channel, "Gotcha!\n{} was caught by {}".format(self.pokestore['name'].upper(), message.author.mention))
             await client.send_message(message.channel, embed=embed)
+            if message.author in self.users_list.keys():
+                self.users_list[message.author].pokeList = self.pokestore
+            else:
+                self.users_list[message.author] = user(message.author, self.pokestore)
             self.pokestore = None
             return
 
