@@ -1,0 +1,6 @@
+*.png
+*.gif
+__pycache__
+*.lnk
+*.cmd
+var_secrets.py
