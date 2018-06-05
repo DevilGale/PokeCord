@@ -1,6 +1,10 @@
+from var_secrets import *
+
 import os
 import sys
 import time
+import json
+import pickle
 import random
 import asyncio
 import discord
@@ -12,12 +16,10 @@ from PIL import Image
 from io import BytesIO
 from imgurpython import ImgurClient
 
-from var_secrets import *
-
 # DISCORD  VARS #
 client = discord.Client()
 
-BOT_PREFIX = "$"
+BOT_PREFIX = ";"
 CHANNEL_IDs  = ("449281327988998156")
 
 # PYTHON VALS #

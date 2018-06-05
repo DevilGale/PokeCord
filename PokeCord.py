@@ -1,10 +1,11 @@
-from MainVars import *
-from user import *
+from Config import *
+from Objects.user import *
 
 class PokeCord:
     def __init__(self):
         self.pokestore = None
         self.imgr_results = None
+        self.spawn_msg = None
         self.users_list = {}
 
     @property    
@@ -40,49 +41,109 @@ class PokeCord:
 
     async def cmd_edit_embed(self, cmd, message, content=None):
         msg_list = []
-        message = await client.get_message(message.channel, content)
+        find_message = await client.get_message(message.channel, content)
         msg_list.append(await client.send_message(message.channel, 'What in the embed do you want to change?'))
         msg_list.append(await client.wait_for_message(author=message.author))
         msg_list.append(await client.send_message(message.channel, 'What would you like it to change to?'))
         msg_list.append(await client.wait_for_message(author=message.author))
         for msg in msg_list:
             print("{}{}{}".format(bcolors.WARNING, msg.content, bcolors.ENDC))
-        for embed in message.embeds:
-            if msg_list[1].content.lower() == "title":
-                embed.title = msg_list[3].content
-            elif msg_list[1].content.lower() == "description":
-                embed.description = msg_list[3].content
-            elif msg_list[1].content.lower() == "color":
-                embed.color = msg_list[3].content
-            elif msg_list[1].content.lower() == "footer":
-                embed.set_footer(text=msg_list[3].content)
-            elif msg_list[1].content.lower() == "thumbnail":
-                embed.set_thumbnail(url=msg_list[3].content)
-            elif msg_list[1].content.lower() == "image":
-                embed.set_image(url=msg_list[3].content)
-            elif msg_list[1].content.lower() == "author":
-                embed.set_author(name=msg_list[3].content)
+        for embed in find_message.embeds:
+            new_embed = embed
+            if msg_list[1].content.strip(" ")[1].lower() == "title":
+                new_embed.title = msg_list[3].content
+            elif msg_list[1].content.strip(" ")[1].lower() == "description":
+                new_embed.description = msg_list[3].content
+            elif msg_list[1].content.strip(" ")[1].lower() == "color":
+                new_embed.color = msg_list[3].content
+            elif msg_list[1].content.strip(" ")[1].lower() == "footer":
+                new_embed.set_footer(text=msg_list[3].content)
+            elif msg_list[1].content.strip(" ")[1].lower() == "thumbnail":
+                new_embed.set_thumbnail(url=msg_list[3].content)
+            elif msg_list[1].content.strip(" ")[1].lower() == "image":
+                new_embed.set_image(url=msg_list[3].content)
+            elif msg_list[1].content.strip(" ")[1].lower() == "author":
+                new_embed.set_author(name=msg_list[3].content)
             else:
                 await client.send_message(message.channel, 'The requested field is not availiable.')
+            await client.edit_message(find_message, embed=new_embed)
         client.delete_messages(msg_list)
 
     async def cmd_spawn(self, cmd, message, content=None):
         await client.send_message(message.channel, 'A Wild Pokémon appears!')
-        if content.isdigit():
-            url = "http://pokeapi.co/api/v2/pokemon/{}/".format(content)
+        if content != None:
+            if content.isdigit():
+                pokeNum = content
+                url = "http://pokeapi.co/api/v2/pokemon/{}/".format(content)
+            else:
+                #print error
+                msg = "When using spawn must be number if input given"
+                await client.send_message(message.channel, msg)
+                return
         else:
-            url = "http://pokeapi.co/api/v2/pokemon/" + str(random.randint(1,200)) + "/"
-        t0 = time.clock()
-        self.pokestore = requests.post(url).json()
-        print("Obtained Pokemon - " + str(time.clock() - t0))
+            pokeNum = str(random.randint(1,200))
+            url = "http://pokeapi.co/api/v2/pokemon/" + pokeNum + "/"
+        #Checks if Pokemon number exists. If it does pulls file
+        if os.path.isfile("IO Files/Pokemon/Pokemon#{}".format(pokeNum)):
+            with open('IO Files/Pokemon/Pokemon#{}'.format(pokeNum), 'r') as file:
+                self.pokestore = json.load(file)
+        else:
+            t0 = time.clock()
+            self.pokestore = requests.post(url).json()
+            print("Obtained Pokemon - " + str(time.clock() - t0))
+            with open('IO Files/Pokemon/Pokemon#{}'.format(self.pokestore['id']), 'w') as file:
+                json.dump(self.pokestore, file)
         embed = discord.Embed()
         embed.title = "Who's that Pokémon"
         embed.set_thumbnail(url=await self.convert_gif_bw(self.pokestore))
-        await client.send_message(message.channel, embed=embed)
+        self.spawn_msg = await client.send_message(message.channel, embed=embed)
+
+    async def cmd_missing(self, cmd, message, content=None):
+        if self.spawn_msg != None:
+            new_embed = discord.Embed()
+            for embed in self.spawn_msg.embeds:
+                new_embed = embed
+                new_embed.set_thumbnail(url=imgr_result)
+            await client.edit_message(self.spawn_msg, embed=new_embed)
+
+    async def cmd_inventory(self, cmd, message, content=None):
+        # prnt_txt = self.users_list[message.author]
+        if message.author in self.users_list.keys():
+            print(self.users_list[message.author])
+            await client.send_message(message.channel, embed=self.users_list[message.author].embed_list())
+        else:
+            msg = "{} you have caught no Pokemon".format(message.author.name)
+            await client.send_message(message.channel, msg)
+
+    async def cmd_bad_gif(self, cmd, message, content=None):
+        if content == None:
+            if self.pokestore == None:
+                msg = "No pokemon is spawned"
+                await client.send_message(message.channel, msg)
+                return
+            file = open("IO Files/badGIF.txt", 'a+')
+            file.write("{}#{}\n".format(self.pokestore['name'], self.pokestore['id']))
+            file.close()
+            msg = "Pokemon has been added to file"
+            await client.send_message(message.channel, msg)
+        else:
+            self.sort_gif_file()
+
+
+    def sort_gif_file(self):
+        with open("IO Files/badGIF.txt", 'r') as file:
+            docText = file.read()
+        print(docText.split("\n"))
+        docText = docText.split("\n")
+        dictText = {}
+        for line in docText[:len(docText) - 1]:
+            dictText[int(line.split("#")[1])] = line
+        with open("IO Files/sorted_badGIF.txt", 'w') as file:
+            file.write("\n".join([value for (key, value) in sorted(dictText.items())]) + "\n")
 
     async def check_capture(self, message):
         if self.pokestore is None:
-            return
+            return False
         if self.pokestore['name'] == message.content.lower():
             embed = discord.Embed(type="rich", title="Gotcha!", color=0xEEE8AA)
             embed.description = "{} was caught by {}".format(self.pokestore['name'].upper(), message.author.mention)
@@ -90,11 +151,12 @@ class PokeCord:
             # await client.send_message(message.channel, "Gotcha!\n{} was caught by {}".format(self.pokestore['name'].upper(), message.author.mention))
             await client.send_message(message.channel, embed=embed)
             if message.author in self.users_list.keys():
-                self.users_list[message.author].pokeList = self.pokestore
+                self.users_list[message.author].addPokeList(self.pokestore, message.author)
             else:
-                self.users_list[message.author] = user(message.author, self.pokestore)
+                self.users_list[message.author] = User(message.author, self.pokestore)
             self.pokestore = None
-            return
+            return True
+        return False
 
     async def convert_bw(self, poke):
         response = requests.get(poke['sprites']['front_default'])
@@ -108,12 +170,12 @@ class PokeCord:
                 if pixdata[x,y] != (0, 0, 0, 0):
                     pixdata[x,y] = black
 
-        shape_img.save('bw_image.png')
+        shape_img.save('Images/bw_image.png')
 
     async def convert_gif_bw(self, poke):
-        txtfile_name = "test.gif"
+        txtfile_name = "Images/PokeGIF.gif"
         response = requests.get("https://play.pokemonshowdown.com/sprites/xyani/" + poke['name'] + ".gif")
-        print("Obtained image")
+        print("Obtained image: {}".format(response))
         frames = Image.open(BytesIO(response.content))
         p = frames.getpalette()
         last_frame = frames.convert('RGBA')
@@ -141,7 +203,8 @@ class PokeCord:
                 frames.seek(frames.tell() + 1)
         except EOFError:
             pass
-        compilation.show(title="show_25")
+        # compilation.show(title="show_25")
+        compilation.save("Images/GIFcollage.png")
         all_frames[0].save(txtfile_name, save_all=True, optimize=True, append_images=all_frames[1:], loop=1000)
         
         self.imgr_result = imgr_client.upload_from_path(txtfile_name, config=None, anon=True)['link']

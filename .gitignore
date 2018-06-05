@@ -1,3 +1,5 @@
+Images/*
+IO\ Files/*
 *.png
 *.gif
 __pycache__

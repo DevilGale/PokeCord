@@ -1,17 +1,23 @@
-from MainVars import *
+from Config import *
 
 class PokeObj:
-    def __init__(self, pokeObj):
+    def __init__(self, pokeObj, psn):
         print(pokeObj.keys())
         self.name = pokeObj['name']
         self.index = pokeObj['id']
+        self.type = [type['type']['name'] for type in pokeObj['types']]
         if len(pokeObj['moves']) < 4:
             self.moves = [item['move'] for item in random.sample(pokeObj['moves'], len(pokeObj['moves']))]
         else:
             self.moves = [item['move'] for item in random.sample(pokeObj['moves'], 4)]
 
+        self.lvl = 5
+        self.exp = 0
+
+        self.caughtBy = (datetime.now().strftime("%a, %b %d, %Y - %I:%M %p"), psn.id)
+
     def __repr__(self):
-        return "{}#{}".format(self.Pname,self.index)
+        return "{}#{}".format(self.name,self.index)
 
     @property
     def name(self):
