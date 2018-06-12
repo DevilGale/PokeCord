@@ -3,10 +3,28 @@ from Objects.user import *
 
 class PokeCord:
     def __init__(self):
+        self.time_to_spawn = None
         self.pokestore = None
         self.imgr_results = None
         self.spawn_msg = None
         self.users_list = {}
+
+    @property
+    def time_to_spawn(self):
+        return self._time_to_spawn
+    
+    @time_to_spawn.setter
+    def time_to_spawn(self, value):
+        self._time_to_spawn = value
+
+    def getSeconds(self):
+        return (self.time_to_spawn - datetime.now()).total_seconds()
+
+    def setToSpawn(self):
+        if self.time_to_spawn == None:
+            return False
+        else:
+            return True
 
     @property    
     def appeared(self):
@@ -23,18 +41,20 @@ class PokeCord:
         # exit()
 
     async def cmd_debug(self, cmd, message, content=None):
-        if message.author.id == MASTER_ID:
-            eval(message.content.lstrip(cmd).strip())
-            try:
-                print(eval(message.content.lstrip(cmd).strip()))
-            except:
-                print(str(eval(message.content.lstrip(cmd).strip())))
-        embed = discord.Embed(type="rich", title="Debug", color=0xEEE8AA)
+        # if message.author.id == MASTER_ID:
+        #     eval(message.content.lstrip(cmd).strip())
+        #     try:
+        #         print(eval(message.content.lstrip(cmd).strip()))
+        #     except:
+        #         print(str(eval(message.content.lstrip(cmd).strip())))
+        embed = discord.Embed(type="rich", title="__Debug__", color=0x7F0000)
         embed.set_footer(text=message.content[:2048])
         try:
             embed.description = str(eval(message.content.lstrip(cmd).strip()))
-        except:
-            embed.description = eval(message.content.lstrip(cmd).strip())
+        except Exception as Err:
+            print("Hit debug except: {}".format(Err))
+            embed.add_field(name="Error", value=Err)
+            # embed.description = eval(message.content.lstrip(cmd).strip())
         await client.send_message(message.channel, embed=embed)
         await client.delete_message(message)
         return
@@ -70,6 +90,7 @@ class PokeCord:
         client.delete_messages(msg_list)
 
     async def cmd_spawn(self, cmd, message, content=None):
+        self.time_to_spawn = None
         await client.send_message(message.channel, 'A Wild Pokémon appears!')
         if content != None:
             if content.isdigit():
