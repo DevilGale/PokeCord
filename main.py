@@ -3,6 +3,22 @@ from PokeCord import *
 
 from datetime import timedelta
 
+
+# Checking folders exist
+if not os.path.isdir("IO Files/"):
+    print("Creating IO Files folder...")
+    os.makedirs("IO Files")
+
+if not os.path.isdir("IO Files/Pokemon/"):
+    print("Creating Pokemon folder...")
+    os.makedirs("IO Files/Pokemon/")
+
+if not os.path.isdir("Images"):
+    print("Creating Images folder...")
+    os.makedirs("Images")
+
+# Checking pickle exists
+
 if os.path.isfile("IO Files/PokeCord.pickle"):
     with open("IO Files/PokeCord.pickle", 'rb') as file:
         Poke = pickle.load(file)
