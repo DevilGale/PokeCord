@@ -6,4 +6,3 @@ __pycache__
 *.lnk
 *.cmd
 var_secrets.py
-Config.py
