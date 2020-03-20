@@ -1,5 +1,6 @@
 @ECHO off
 
-REM CMD /k python -m pip install --upgrade pip
-REM CMD /k pip install imgurpython
-CMD /k pip install Pillow
+CMD /k py -3 -m pip install --upgrade pip
+CMD /k py -3 -m pip install -U discord.py
+CMD /k py -3 -m pip install imgurpython
+CMD /k py -3 -m pip install Pillow

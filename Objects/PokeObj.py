@@ -1,8 +1,10 @@
 from Config import *
 
+from datetime import datetime
+
 class PokeObj:
     def __init__(self, pokeObj, psn):
-        print(pokeObj.keys())
+        #print(pokeObj.keys())
         self.name = pokeObj['name']
         self.index = pokeObj['id']
         self.type = [type['type']['name'] for type in pokeObj['types']]

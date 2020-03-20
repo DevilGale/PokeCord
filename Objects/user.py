@@ -3,7 +3,7 @@ from Objects.PokeObj import *
 
 class User:
     def __init__(self, user, poke):
-        self.user = user
+        self.user = user.id
         self.pokeList = {poke['name'] : [PokeObj(poke, user)]}
         self.items = []
 
@@ -53,8 +53,8 @@ class User:
     def listInventory(self):
         pass
 
-    def embed_list(self):
-        str_title = "__{}'s Pokemon__".format(self.user.name)
+    def embed_list(self, user):
+        str_title = "__{}'s Pokemon__".format(user.name)
         str_footer = "Obtained {} of 802 Pokemon".format(len(self.pokeList.keys()))
         embed = discord.Embed(type="rich", title=str_title, color=0xEEE8AA)
         str_desc = ""
