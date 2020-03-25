@@ -28,12 +28,14 @@ def simpleCollage(frames, num_images_width : int = 5, num_images_height : int = 
     width, height = frames.size
     print(f"Frames in image: {frames.n_frames} - {frames.filename}")
     compilation = Image.new('RGBA', size=(width * num_images_width, height * num_images_height))
+    fnt = ImageFont.load_default().font
     for i in range(frames.n_frames):
         frames.seek(i)
-        print(f"{i:2}: Disposal Method - {frames.disposal_method}, Disposal Extend - {frames.dispose_extent}")
+        print(f"{i:2}: Disposal Method - {frames.disposal_method}, Disposal Extend - {frames.dispose_extent}, Info - {frames.info}")
         the_frame = frames.convert()
         draw = ImageDraw.Draw(the_frame)
         draw.rectangle(frames.dispose_extent, outline=(255,173,0,255))
+        draw.text((0,0), f"F{i}-M{frames.disposal_method}", font=fnt, fill=(255, 0, 0))
         #pixdata[frames.dispose_extent[0], frames.dispose_extent[1]] = (255, 173, 0, 255)
         compilation.paste(
             the_frame, 
@@ -61,9 +63,9 @@ def GIFconvertBW(frames):
             size_opt_color = pixel_color
             break;
 
-    fnt = ImageFont.load_default().font
     corrected_prev_frame = None
     pass_frame = Image.new('RGBA', size=frames.size)
+    disposal_method_list = []
     for i in range(frames.n_frames):
         frames.seek(i)
         disp_frame, pass_frame = method_dispose(i, frames, pass_frame)
@@ -75,6 +77,11 @@ def GIFconvertBW(frames):
 
         pixdata = disp_frame.load()
         #Change Colors
+        if pixdata[0, 0][3] is 255:
+            remove_color = pixdata[0, 0]
+            for x in range(width):
+                for y in range(height):    
+                    pixdata[x, y] = white + (0, )
         for x in range(width):
             for y in range(height):
                 if pixdata[x,y][3] == 255:
@@ -82,9 +89,7 @@ def GIFconvertBW(frames):
                 else:
                     pixdata[x,y] = white + (255,)
 
-        draw = ImageDraw.Draw(disp_frame)
-        draw.text((width / 2, height / 2), str(i), font=fnt)
-
+        disposal_method_list.append(frames.disposal_method)
         all_frames.append(disp_frame)
 
     #for i in range(len(all_frames)):
@@ -100,6 +105,7 @@ def GIFconvertBW(frames):
         optimize=False,
         duration=frames.info['duration'],
         loop=0
+        #disposal=disposal_method_list
         )
     simpleCollage(Image.open("test.gif"))
 
@@ -107,33 +113,24 @@ def GIFconvertBW(frames):
 #         Frame Process Methods          #
 ##########################################
 
+#crop_frame = current_frame.crop(frames.dispose_extent)
+#new_frame.alpha_composite(crop_frame, dest=frames.dispose_extent[0:2])
+
 def method_dispose(i, frames, previous_frame):
-    current_frame = frames.convert()
-    crop_frame = current_frame.crop(frames.dispose_extent)
-    # 2 PIL = Overlay and return previous
-    # 1 PIL = Erase Overlay
     # 0 PIL = Overlay and pass
+    # 1 PIL = Overlay and return previous
+    # 2 PIL = Erase Overlay
+    new_frame = previous_frame.copy()
+    current_frame = frames.convert()
+    new_frame.alpha_composite(current_frame, dest=frames.dispose_extent[0:2], source=frames.dispose_extent)
     if frames.disposal_method is 0:
-        new_frame = previous_frame.copy()
-        new_frame.alpha_composite(crop_frame, dest=frames.dispose_extent[0:2])
-        return new_frame, new_frame
-    elif frames.disposal_method is 2:
-        new_frame = previous_frame.copy()
-        # while frames.disposal_method is 1:
-        #     if frames.tell() is 0:
-        #         new_frame = Image.new('RGBA', size=frames.size)
-        #         break;
-        #     else:
-        #         new_frame = frames.convert()
-        #     frames.seek(frames.tell() - 1)
-        new_frame.alpha_composite(crop_frame, dest=frames.dispose_extent[0:2])
-        return new_frame, previous_frame
+        return new_frame, Image.new('RGBA', box=frames.size)
     elif frames.disposal_method is 1:
-        new_frame = previous_frame.copy()
-        new_frame.alpha_composite(crop_frame, dest=frames.dispose_extent[0:2])
+        return new_frame, new_frame.copy()
+    elif frames.disposal_method is 2:
         draw = ImageDraw.Draw(previous_frame)
         draw.rectangle(frames.dispose_extent, fill=(white + (0,)))
-        return new_frame, previous_frame
+        return new_frame, previous_frame.copy()
 
 def method_sum_check(i, current_frame : Image, previous_frame :  Image, size_opt_color):
     width, height = current_frame.size
@@ -223,9 +220,10 @@ def main():
     # If pokemon name is known
     else:
         frames = getGIFimage(sys.argv[1])
-    simpleCollage(frames)
+    simpleCollage(frames, 12, 5)
     GIFconvertBW(frames)
-    #print(dir(frames))
+    #print('\n'.join(dir(frames)))
+
 
 
 
