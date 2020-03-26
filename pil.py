@@ -1,10 +1,10 @@
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageColor
 from io import BytesIO
 import requests
 
 import random
 import time
-#import numpy as np
+import math
 import sys
 
 white = (255,255,255) #255
@@ -24,19 +24,20 @@ def getGIFimage(name):
     frames = Image.open(BytesIO(response.content))
     return frames
 
-def simpleCollage(frames, num_images_width : int = 5, num_images_height : int = 10):
+def simpleCollage(frames, num_images_width : int = 5, num_images_height : int = 10, fit : bool = False):
     width, height = frames.size
-    print(f"Frames in image: {frames.n_frames} - {frames.filename}")
+    if fit:
+        num_images_height = math.ceil(frames.n_frames / num_images_width)
+    print(f"Frames in image ({num_images_width}x{num_images_height}): {frames.n_frames} - {frames.filename}")
     compilation = Image.new('RGBA', size=(width * num_images_width, height * num_images_height))
     fnt = ImageFont.load_default().font
+    #print(f"Disposal Method - {frames.disposal_method}, Disposal Extend - {frames.dispose_extent}, Info - {frames.info}")
     for i in range(frames.n_frames):
         frames.seek(i)
-        print(f"{i:2}: Disposal Method - {frames.disposal_method}, Disposal Extend - {frames.dispose_extent}, Info - {frames.info}")
-        the_frame = frames.convert()
+        the_frame = frames.convert('RGBA')
         draw = ImageDraw.Draw(the_frame)
         draw.rectangle(frames.dispose_extent, outline=(255,173,0,255))
         draw.text((0,0), f"F{i}-M{frames.disposal_method}", font=fnt, fill=(255, 0, 0))
-        #pixdata[frames.dispose_extent[0], frames.dispose_extent[1]] = (255, 173, 0, 255)
         compilation.paste(
             the_frame, 
             box=(
@@ -53,48 +54,35 @@ def GIFconvertBW(frames):
     width, height = frames.size
     all_frames = []
 
-    size_opt_color = None
-    for i in range(frames.n_frames):
-        frames.seek(i)
-        #print(f"Current {i:2}: Palette: {frames.palette.getdata()}")#frames.palette.tostring()}")
-        curr_frame = frames.convert()
-        pixel_color = curr_frame.getpixel((0,0))
-        if pixel_color[3] == 255:
-            size_opt_color = pixel_color
-            break;
+    # size_opt_color = None
+    # for i in range(frames.n_frames):
+    #     frames.seek(i)
+    #     #print(f"Current {i:2}: Palette: {frames.palette.getdata()}")#frames.palette.tostring()}")
+    #     curr_frame = frames.convert()
+    #     pixel_color = curr_frame.getpixel((0,0))
+    #     if pixel_color[3] == 255:
+    #         size_opt_color = pixel_color
+    #         break;
 
     corrected_prev_frame = None
-    pass_frame = Image.new('RGBA', size=frames.size)
-    disposal_method_list = []
+    pass_frame = Image.new('RGBA', size=frames.size, color=(255,255,255,0))
+    #disposal_method_list = []
     for i in range(frames.n_frames):
         frames.seek(i)
         disp_frame, pass_frame = method_dispose(i, frames, pass_frame)
-        # current_frame = frames.convert()
-        # #print(f"{i:3} - Pre: {frame_alpha_sum}")
-        # disp_frame, corrected_prev_frame = method_sum_check(i, current_frame, corrected_prev_frame, size_opt_color)
-        # disp_frame.dispose_extent = frames.dispose_extent
-        #disp_frame.putpalette(my_palette)
 
+        disp_frame = disp_frame.convert('RGB')
         pixdata = disp_frame.load()
         #Change Colors
-        if pixdata[0, 0][3] is 255:
-            remove_color = pixdata[0, 0]
-            for x in range(width):
-                for y in range(height):    
-                    pixdata[x, y] = white + (0, )
         for x in range(width):
             for y in range(height):
-                if pixdata[x,y][3] == 255:
-                    pixdata[x,y] = black + (255,)
+                if pixdata[x,y] == white:
+                    pixdata[x,y] = white
                 else:
-                    pixdata[x,y] = white + (255,)
-
-        disposal_method_list.append(frames.disposal_method)
+                    pixdata[x,y] = black
+        disp_frame = disp_frame.convert('P')
         all_frames.append(disp_frame)
 
-    #for i in range(len(all_frames)):
-    #    print(f"{i:2}: Palette: {all_frames[i].palette}")
-    #    print(f"{i:2}: Info: {all_frames[i].info}")
 
     print(f"Save {len(all_frames)} frames in 'test.gif'")
     all_frames[0].save(
@@ -104,10 +92,12 @@ def GIFconvertBW(frames):
         append_images=all_frames[1:], 
         optimize=False,
         duration=frames.info['duration'],
-        loop=0
-        #disposal=disposal_method_list
+        loop=0,
+        disposal=3,
+        transparency=255,
+        background=0
         )
-    simpleCollage(Image.open("test.gif"))
+    simpleCollage(Image.open("test.gif"), 12, fit=True)
 
 ##########################################
 #         Frame Process Methods          #
@@ -122,15 +112,19 @@ def method_dispose(i, frames, previous_frame):
     # 2 PIL = Erase Overlay
     new_frame = previous_frame.copy()
     current_frame = frames.convert()
+
     new_frame.alpha_composite(current_frame, dest=frames.dispose_extent[0:2], source=frames.dispose_extent)
     if frames.disposal_method is 0:
         return new_frame, Image.new('RGBA', box=frames.size)
     elif frames.disposal_method is 1:
         return new_frame, new_frame.copy()
-    elif frames.disposal_method is 2:
+    elif frames.disposal_method is 2 or frames.disposal_method is 3:
         draw = ImageDraw.Draw(previous_frame)
         draw.rectangle(frames.dispose_extent, fill=(white + (0,)))
         return new_frame, previous_frame.copy()
+    else:
+        print("UNKNOWN disposal_method")
+        exit()
 
 def method_sum_check(i, current_frame : Image, previous_frame :  Image, size_opt_color):
     width, height = current_frame.size
@@ -220,7 +214,7 @@ def main():
     # If pokemon name is known
     else:
         frames = getGIFimage(sys.argv[1])
-    simpleCollage(frames, 12, 5)
+    simpleCollage(frames, 12, fit=True)
     GIFconvertBW(frames)
     #print('\n'.join(dir(frames)))
 

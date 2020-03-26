@@ -1,11 +1,14 @@
 from discord.ext import commands
-from Config import *
+import config as config
 from Objects.user import *
+#from pil import method_sum_check
 
+import random
 from datetime import time, datetime, timedelta
 
+import pickle
 import requests
-from PIL import Image
+from PIL import Image, ImageDraw
 from io import BytesIO
 
 #Trainer -> [Items, box, ]
@@ -14,10 +17,10 @@ class PokeCord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.time_to_spawn = None
-        self.pokestore = None
+        self.pokestore = None #current_pokemon
         self.imgr_results = None
         self.spawn_msg = None
-        self.users_list = {}
+        self.users_list = {} #trainer_list
 
     def __getstate__(self):
         return ({
@@ -298,65 +301,58 @@ class PokeCord(commands.Cog):
         print("Obtained image: {}".format(response))
         #'Download' the file
         frames = Image.open(BytesIO(response.content))
-        p = frames.getpalette()
-        last_frame = frames.convert('RGBA')
         all_frames = []
-        width, height = last_frame.size
+        disposal_methods = []
+        width, height = frames.size
         #Creates a viewing picture
         compilation = Image.new('RGBA', size=(width * 5, height * 10))
 
+        prev_frame = Image.new('RGBA', size=frames.size, color=(255,255,255,0))
         for i in range(frames.n_frames):
             frames.seek(i)
             if len(all_frames) <= 50:
-                    compilation.paste(frames.convert('RGBA'),box=(width * divmod(len(all_frames),6)[1], height * divmod(len(all_frames),9)[0]))
+                    compilation.paste(
+                        frames.convert('RGBA'),
+                        box=(
+                            width * int(i % 5), 
+                            height * int(i / 5)
+                            )
+                        )
                     
-            if i != 0:
-                curr_frame = frames.convert('RGBA')
-                disp_frame = Image.alpha_composite(prev_frame, curr_frame)
-            else:
-                disp_frame = frames.convert('RGBA')
+            disp_frame, prev_frame = method_dispose(frames, prev_frame)
+
+            disp_frame = disp_frame.convert('RGB')
             pixdata = disp_frame.load()
-            for x in range(width - 1):
-                for y in range(height - 1):
-                    if pixdata[x,y][3] == 255:
+            #Change Colors
+            for x in range(width):
+                for y in range(height):
+                    if pixdata[x,y] != white:
                         pixdata[x,y] = black
-                    else:
-                        pixdata[x,y] = white
+
+            #disp_frame.info = frames.info
+            disp_frame = disp_frame.convert('P')
             all_frames.append(disp_frame)
-
-            prev_frame = frames.convert('RGBA')
-
-        # try:
-        #     while True:
-        #         if not frames.getpalette():
-        #             frames.putpalette(p)
-
-        #         current_frame = frames.convert('RGBA')   
-        #         #It seems that each frame can have a base different color besides white
-        #         if len(all_frames) <= 50:
-        #             compilation.paste(current_frame,box=(width * divmod(len(all_frames),6)[1], height * divmod(len(all_frames),9)[0]))
-                    
-        #         pixdata = current_frame.load()
-        #         first_color_frame = pixdata[1,1]
-        #         for x in range(0, width - 1):
-        #             for y in range(0, height - 1):
-        #                 if pixdata[x,y][3] == 255:
-        #                     pixdata[x,y] = black + (255,)
-        #                 else
-        #                     pixdata[x,y] = white + (255,)
-        #                 # if pixdata[x,y] != first_color_frame:
-        #                 #     pixdata[x,y] = black
-        #         all_frames.append(current_frame)
-        #         frames.seek(frames.tell() + 1)
-        # except EOFError:
-        #     pass
-        # compilation.show(title="show_25")
+            disposal_methods.append(frames.disposal_method)
+        #print(all_frames[0].getpalette())
         compilation.save("Images/GIFcollage.png")
         #Save the gif
-        all_frames[0].save(txtfile_name, save_all=True, optimize=True, append_images=all_frames[1:], loop=1000)
+        disposal_methods = [1]
+        disposal_methods.extend([2 for _ in range(len(all_frames))])
+        print(all_frames[0].getcolors())
+        all_frames[0].save(
+            txtfile_name, 
+            save_all=True, 
+            append_images=all_frames[1:], 
+            optimize=False,
+            duration=frames.info['duration'],
+            loop=0,
+            disposal=3, #disposal_methods,
+            transparency=255,
+            background=0
+            )
         #Upload to Imgr
         try:
-            self.imgr_result = imgr_client.upload_from_path(txtfile_name, config=None, anon=True)['link']
+            self.imgr_result = config.imgr_client.upload_from_path(txtfile_name, config=None, anon=True)['link']
         except Exception as Err:
             print(Err)
             raise Err
@@ -389,3 +385,22 @@ class PokeCord(commands.Cog):
         await context.send(embed=embed)
         await context.message.delete()
         return
+
+def method_dispose(frames, previous_frame):
+    # 0 PIL = Overlay and pass
+    # 1 PIL = Overlay and return previous
+    # 2 PIL = Erase Overlay
+    new_frame = previous_frame.copy()
+    current_frame = frames.convert()
+    new_frame.alpha_composite(current_frame, dest=frames.dispose_extent[0:2], source=frames.dispose_extent)
+    if frames.disposal_method is 0:
+        return new_frame, Image.new('RGBA', box=frames.size)
+    elif frames.disposal_method is 1:
+        return new_frame, new_frame.copy()
+    elif frames.disposal_method is 2 or frames.disposal_method is 3:
+        draw = ImageDraw.Draw(previous_frame)
+        draw.rectangle(frames.dispose_extent, fill=(white + (0,)))
+        return new_frame, previous_frame.copy()
+    else:
+        print("UNKNOWN disposal_method")
+        return current_frame, current_frame.copy()
