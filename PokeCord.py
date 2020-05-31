@@ -2,6 +2,9 @@ from discord.ext import commands
 from Config import *
 from Objects.user import *
 
+# sys is needed for the restart function. See line 142.
+import sys
+
 from datetime import time, datetime, timedelta
 
 import requests
