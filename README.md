@@ -32,7 +32,9 @@ Run '[runbot.bat](runbot.bat)' after installing to start the bot.
 ## To-do
 - [x] Catch-able Pokemon
 - [ ] Admin Change spawn time
+- [ ] Limit which region is spawned
 - [ ] Fix checking and catching channel
 - [ ] Fix Re-coloring
 - [ ] Add items
 - [ ] Add leveling and battling
+- [ ] Add variabled spawn rate based off rarity (maybe)

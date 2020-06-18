@@ -31,16 +31,67 @@ def simpleCollage(frames, num_images_width : int = 5, num_images_height : int = 
     print(f"Frames in image ({num_images_width}x{num_images_height}): {frames.n_frames} - {frames.filename}")
     compilation = Image.new('RGBA', size=(width * num_images_width, height * num_images_height))
     fnt = ImageFont.load_default().font
+    last_dispose_method_2 = 0
+    for i in range(frames.n_frames):
+        frames.seek(i)
+        the_frame = frames.convert()
+        draw = ImageDraw.Draw(the_frame)
+        draw.rectangle(frames.dispose_extent, outline=(0,0,0,255))
+        draw.text((0,0), f"F{i}-M{frames.disposal_method}", font=fnt, fill=(255, 0, 0))
+
+        compilation.alpha_composite(
+            the_frame, 
+            dest=(
+                width * int(i % num_images_width), 
+                height * int(i / num_images_width)
+                )
+            )
+        if frames.disposal_method == 2:
+            last_dispose_method_2 = i
+        frames.seek(0)
+        if i == (num_images_width * num_images_height):
+            break;
+    compilation.show()
+    compilation.save("compilation.png")  
+
+def reformCollage(frames, num_images_width : int = 5, num_images_height : int = 10, fit : bool = False):
+    # frames.seek(27)
+    # frames.show()
+    width, height = frames.size
+    if fit:
+        num_images_height = math.ceil(frames.n_frames / num_images_width)
+    print(f"Frames in image ({num_images_width}x{num_images_height}): {frames.n_frames} - {frames.filename}")
+    frames.seek(0)
+    backgroundColor = frames.info['background']
+    compilation = Image.new('RGBA', size=(width * num_images_width, height * num_images_height), color=(255, 255, 0))#, color=(255,0,0))
+    fnt = ImageFont.load_default().font
     #print(f"Disposal Method - {frames.disposal_method}, Disposal Extend - {frames.dispose_extent}, Info - {frames.info}")
     for i in range(frames.n_frames):
         frames.seek(i)
-        the_frame = frames.convert('RGBA')
+        the_frame = Image.new('RGBA', size=frames.size)
+        pixdata = the_frame.load()
+
+        for x in range(width):
+            for y in range(height):
+                palette = frames.getpalette()
+                a_pixel = frames.getpixel((x,y))
+                if a_pixel == frames.info['transparency']:
+                    pixdata[x, y] = (0, 255, 255, 0)
+                    #pixdata[x,y] = tuple(palette[a_pixel:a_pixel+3] + [100])
+                elif a_pixel == frames.info['background']:
+                    pixdata[x, y] = (255, 0 , 0, 255)
+                else:
+                    pixdata[x,y] = tuple(palette[a_pixel:a_pixel+3])# + [255])
+        #the_frame.alpha_composite(frames, dest=frames.dispose_extent[0:2], source=frames.dispose_extent)
+        #the_frame = frames.convert()
+
         draw = ImageDraw.Draw(the_frame)
         draw.rectangle(frames.dispose_extent, outline=(255,173,0,255))
-        draw.text((0,0), f"F{i}-M{frames.disposal_method}", font=fnt, fill=(255, 0, 0))
-        compilation.paste(
+        # draw.text((0,0), f"F{i}-M{frames.disposal_method}", font=fnt, fill=(255, 0, 0))
+
+        compilation.alpha_composite(
             the_frame, 
-            box=(
+            dest=(
                 width * int(i % num_images_width), 
                 height * int(i / num_images_width)
                 )
@@ -54,32 +105,24 @@ def GIFconvertBW(frames):
     width, height = frames.size
     all_frames = []
 
-    # size_opt_color = None
-    # for i in range(frames.n_frames):
-    #     frames.seek(i)
-    #     #print(f"Current {i:2}: Palette: {frames.palette.getdata()}")#frames.palette.tostring()}")
-    #     curr_frame = frames.convert()
-    #     pixel_color = curr_frame.getpixel((0,0))
-    #     if pixel_color[3] == 255:
-    #         size_opt_color = pixel_color
-    #         break;
-
     corrected_prev_frame = None
     pass_frame = Image.new('RGBA', size=frames.size, color=(255,255,255,0))
     #disposal_method_list = []
     for i in range(frames.n_frames):
         frames.seek(i)
+        if i == 4:
+            frames.save(f"frames_{i}.png")
         disp_frame, pass_frame = method_dispose(i, frames, pass_frame)
-
+        frames.seek(0)
         disp_frame = disp_frame.convert('RGB')
+
         pixdata = disp_frame.load()
         #Change Colors
         for x in range(width):
             for y in range(height):
-                if pixdata[x,y] == white:
-                    pixdata[x,y] = white
-                else:
+                if pixdata[x,y] != white:
                     pixdata[x,y] = black
+
         disp_frame = disp_frame.convert('P')
         all_frames.append(disp_frame)
 
@@ -93,7 +136,7 @@ def GIFconvertBW(frames):
         optimize=False,
         duration=frames.info['duration'],
         loop=0,
-        disposal=3,
+        disposal=1,
         transparency=255,
         background=0
         )
@@ -214,9 +257,11 @@ def main():
     # If pokemon name is known
     else:
         frames = getGIFimage(sys.argv[1])
+    print(frames.info)
     simpleCollage(frames, 12, fit=True)
     GIFconvertBW(frames)
-    #print('\n'.join(dir(frames)))
+
+    #import pdb; pdb.set_trace()
 
 
 
