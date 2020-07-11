@@ -10,7 +10,7 @@ Is a bot where every so often a pokemon spawns and has to be guessed to be caugh
 
 ### Installing
 
-Create your API secrets and input them into the '[var_secret.py](var_secret.py)' file, with the values enclosed in quotes.
+Create your API secrets and input them into the '[var_secrets.py](var_secrets.py)' file, with the values enclosed in quotes.
 - [imgur](https://api.imgur.com/oauth2/addclient)
 - [discord](https://discordpy.readthedocs.io/en/latest/discord.html)
 
