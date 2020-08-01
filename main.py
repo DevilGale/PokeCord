@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 import config
 from var_secrets import TOKEN
 from PokeCord import *
@@ -59,13 +60,15 @@ async def on_command_error(ctx, error):
 
 @bot.command(name='restart')
 async def cmd_restart(ctx):
+    print(sys.executable)
+    print(sys.argv)
     await ctx.send('Restarting...')
     try:
         await bot.close()
     except:
         pass
     finally:
-        os.execl(sys.executable, sys.executable, * sys.argv)
+        os.execl(Path(sys.executable), '"' + sys.executable + '"', * sys.argv)
 
 @bot.command(name='shutdown')
 @commands.is_owner()
