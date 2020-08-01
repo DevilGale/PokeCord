@@ -1,14 +1,12 @@
-from var_secrets import *
+from var_secrets import imgr_client_id, imgr_client_secret
 
 import os
 import json
-import pickle
-import random
 import asyncio
 
 # api #
 import discord
-from imgurpython import ImgurClient
+from imgurpython import ImgurClient #swap to pyimgur in the future
 
 # DISCORD  VARS #
 #client = discord.Client()
@@ -32,5 +30,5 @@ class bcolors:
 imgr_client = ImgurClient(imgr_client_id, imgr_client_secret)
 
 # Image Vars #
-white = (255,255,255,255)
+white = (255,255,255)
 black = (0, 0, 0, 255)

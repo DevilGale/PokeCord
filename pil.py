@@ -1,10 +1,10 @@
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont, ImageColor
 from io import BytesIO
 import requests
 
 import random
 import time
-import numpy as np
+import math
 import sys
 
 white = (255,255,255) #255
@@ -15,98 +15,234 @@ def getPokemon(val):
     url = "http://pokeapi.co/api/v2/pokemon/" + val + "/"
     t0 = time.clock()
     poke = requests.get(url).json()
-    print("Obtained Pokemon - " + str(time.clock() - t0))
+    print(f"Obtained Pokemon - {time.clock() - t0}")
     return poke
 
 def getGIFimage(name):
-    response = requests.get("https://play.pokemonshowdown.com/sprites/xyani/" + name.lower() + ".gif")
-    print("Obtained Image: {}".format(response))
+    response = requests.get(f"https://play.pokemonshowdown.com/sprites/xyani/{name.lower()}.gif")
+    print(f"Obtained Image: {response} : {response.url}")
     frames = Image.open(BytesIO(response.content))
     return frames
 
-def simpleCollage(frames):
-    i = 0
+def simpleCollage(frames, num_images_width : int = 5, num_images_height : int = 10, fit : bool = False):
     width, height = frames.size
-    compilation =  Image.new('RGBA', size=(width * 5, height * 5))
-    p = frames.getpalette()
-    doOnce = True
+    if fit:
+        num_images_height = math.ceil(frames.n_frames / num_images_width)
+    print(f"Frames in image ({num_images_width}x{num_images_height}): {frames.n_frames} - {frames.filename}")
+    compilation = Image.new('RGBA', size=(width * num_images_width, height * num_images_height))
+    fnt = ImageFont.load_default().font
+    last_dispose_method_2 = 0
+    for i in range(frames.n_frames):
+        frames.seek(i)
+        the_frame = frames.convert()
+        draw = ImageDraw.Draw(the_frame)
+        draw.rectangle(frames.dispose_extent, outline=(0,0,0,255))
+        draw.text((0,0), f"F{i}-M{frames.disposal_method}", font=fnt, fill=(255, 0, 0))
 
-    try:                
-        while True:
-            if i <= 25:
-                compilation.paste(frames, box=(width * divmod(i,6)[1], height * divmod(i,6)[0]))
-            if not frames.getpalette():
-                frames.putpalette(p)
-                print("Put Palette")
-            if doOnce:
+        compilation.alpha_composite(
+            the_frame, 
+            dest=(
+                width * int(i % num_images_width), 
+                height * int(i / num_images_width)
+                )
+            )
+        if frames.disposal_method == 2:
+            last_dispose_method_2 = i
+        frames.seek(0)
+        if i == (num_images_width * num_images_height):
+            break;
+    compilation.show()
+    compilation.save("compilation.png")  
 
-                # print(frames.getpalette())
-                print(frames.getcolors())
-                doOnce = False
-            frames.seek(frames.tell() + 1)
-            i = i + 1
-    except EOFError:
-        pass
-    compilation.show()  
+def reformCollage(frames, num_images_width : int = 5, num_images_height : int = 10, fit : bool = False):
+    # frames.seek(27)
+    # frames.show()
+    width, height = frames.size
+    if fit:
+        num_images_height = math.ceil(frames.n_frames / num_images_width)
+    print(f"Frames in image ({num_images_width}x{num_images_height}): {frames.n_frames} - {frames.filename}")
+    frames.seek(0)
+    backgroundColor = frames.info['background']
+    compilation = Image.new('RGBA', size=(width * num_images_width, height * num_images_height), color=(255, 255, 0))#, color=(255,0,0))
+    fnt = ImageFont.load_default().font
+    #print(f"Disposal Method - {frames.disposal_method}, Disposal Extend - {frames.dispose_extent}, Info - {frames.info}")
+    for i in range(frames.n_frames):
+        frames.seek(i)
+        the_frame = Image.new('RGBA', size=frames.size)
+        pixdata = the_frame.load()
+
+        for x in range(width):
+            for y in range(height):
+                palette = frames.getpalette()
+                a_pixel = frames.getpixel((x,y))
+                if a_pixel == frames.info['transparency']:
+                    pixdata[x, y] = (0, 255, 255, 0)
+                    #pixdata[x,y] = tuple(palette[a_pixel:a_pixel+3] + [100])
+                elif a_pixel == frames.info['background']:
+                    pixdata[x, y] = (255, 0 , 0, 255)
+                else:
+                    pixdata[x,y] = tuple(palette[a_pixel:a_pixel+3])# + [255])
+        #the_frame.alpha_composite(frames, dest=frames.dispose_extent[0:2], source=frames.dispose_extent)
+        #the_frame = frames.convert()
+
+        draw = ImageDraw.Draw(the_frame)
+        draw.rectangle(frames.dispose_extent, outline=(255,173,0,255))
+        # draw.text((0,0), f"F{i}-M{frames.disposal_method}", font=fnt, fill=(255, 0, 0))
+
+        compilation.alpha_composite(
+            the_frame, 
+            dest=(
+                width * int(i % num_images_width), 
+                height * int(i / num_images_width)
+                )
+            )
+        if i == (num_images_width * num_images_height):
+            break;
+    compilation.show()
+    compilation.save("compilation.png")  
 
 def GIFconvertBW(frames):
-    frames.seek(0)
-    p = frames.getpalette()
-    last_frame = frames.convert('RGBA')
+    width, height = frames.size
     all_frames = []
-    try:
-        while True:
-            hitBlackLine = False
-            colorsToCheck = [transparent]
-            if not frames.getpalette():
-                frames.putpalette(p)
 
-            current_frame = frames.convert('RGB')   
-            pixdata = current_frame.load()
-            width, height = current_frame.size
-            for x in range(0, width - 1):
-                for y in range(0, height - 1):
-                    if hitBlackLine:
-                        if pixdata[x,y] not in colorsToCheck:
-                            pixdata[x,y] = black
-                        else:
-                            pixdata[x,y] = white
-                    else:
-                        if pixdata[x,y] <= (60,60,60):
-                            hitBlackLine = True
-                        elif pixdata[x,y] not in colorsToCheck:
-                            colorsToCheck.append(pixdata[x,y])
-                            # pixdata[x,y] = white
-                # hitBlackLine = False
+    corrected_prev_frame = None
+    pass_frame = Image.new('RGBA', size=frames.size, color=(255,255,255,0))
+    #disposal_method_list = []
+    for i in range(frames.n_frames):
+        frames.seek(i)
+        if i == 4:
+            frames.save(f"frames_{i}.png")
+        disp_frame, pass_frame = method_dispose(i, frames, pass_frame)
+        frames.seek(0)
+        disp_frame = disp_frame.convert('RGB')
 
-                    #Option 1#################################        
-                    # if hitBlackLine:
-                    #     if pixdata[x,y] not in colorsToCheck:
-                    #         pixdata[x,y] = black
-                    #     else:
-                    #         pixdata[x,y] = white
-                    # else:
-                    #     if pixdata[x,y] <= (60,60,60):
-                    #         hitBlackLine = True
-                    #     elif pixdata[x,y] not in colorsToCheck:
-                    #         colorsToCheck.append(pixdata[x,y])
-                    ###########################################
-                    # if not hitBlackLine and pixdata[x,y] != black:
-                    #     colorsToCheck.append(pixdata[x,y])
-                    #     print(pixdata[x,y])
+        pixdata = disp_frame.load()
+        #Change Colors
+        for x in range(width):
+            for y in range(height):
+                if pixdata[x,y] != white:
+                    pixdata[x,y] = black
 
-                    # elif not hitBlackLine and pixdata[x,y] == black:
-                    #     hitBlackLine = True
-                    # elif pixdata[x,y] not in colorsToCheck:
-                    #     pixdata[x,y] = black
-            current_frame = current_frame.convert('RGBA')
-            all_frames.append(current_frame)
-            frames.seek(frames.tell() + 1)
-            print("Frame {}: {}".format(frames.tell(), colorsToCheck[:4]))
-    except EOFError:
-        pass
-    all_frames[0].save("test.gif", save_all=True, optimize=True, append_images=all_frames[1:], loop=1000)
-    simpleCollage(Image.open("test.gif"))
+        disp_frame = disp_frame.convert('P')
+        all_frames.append(disp_frame)
+
+
+    print(f"Save {len(all_frames)} frames in 'test.gif'")
+    all_frames[0].save(
+        fp="test.gif", 
+        format='GIF',
+        save_all=True, 
+        append_images=all_frames[1:], 
+        optimize=False,
+        duration=frames.info['duration'],
+        loop=0,
+        disposal=1,
+        transparency=255,
+        background=0
+        )
+    simpleCollage(Image.open("test.gif"), 12, fit=True)
+
+##########################################
+#         Frame Process Methods          #
+##########################################
+
+#crop_frame = current_frame.crop(frames.dispose_extent)
+#new_frame.alpha_composite(crop_frame, dest=frames.dispose_extent[0:2])
+
+def method_dispose(i, frames, previous_frame):
+    # 0 PIL = Overlay and pass
+    # 1 PIL = Overlay and return previous
+    # 2 PIL = Erase Overlay
+    new_frame = previous_frame.copy()
+    current_frame = frames.convert()
+
+    new_frame.alpha_composite(current_frame, dest=frames.dispose_extent[0:2], source=frames.dispose_extent)
+    if frames.disposal_method is 0:
+        return new_frame, Image.new('RGBA', box=frames.size)
+    elif frames.disposal_method is 1:
+        return new_frame, new_frame.copy()
+    elif frames.disposal_method is 2 or frames.disposal_method is 3:
+        draw = ImageDraw.Draw(previous_frame)
+        draw.rectangle(frames.dispose_extent, fill=(white + (0,)))
+        return new_frame, previous_frame.copy()
+    else:
+        print("UNKNOWN disposal_method")
+        exit()
+
+def method_sum_check(i, current_frame : Image, previous_frame :  Image, size_opt_color):
+    width, height = current_frame.size
+    if previous_frame is None:
+            disp_frame = current_frame.copy()
+    else:
+        #Remove borders
+        pixdata = current_frame.load()
+        if size_opt_color is not None:
+            if pixdata[0, 0] == size_opt_color:
+                for x in range(width):
+                    for y in range(height):
+                        if pixdata[x, y] == size_opt_color:
+                            pixdata[x,y] = white + (0, )
+                        # elif pixdata[x, y][3] == 255:
+                        #     break;
+
+                    # for y in range(height - 1, -1, -1):
+                    #     if pixdata[x, y] == size_opt_color:
+                    #         pixdata[x, y] = white + (0, )
+                    #     elif pixdata[x, y][3] == 255:
+                    #         break;
+        curr_alpha_sum = 0
+        prev_alpha_sum = 0
+        prev_pixdata = previous_frame.load()
+        for x in range(width):
+            for y in range(height):
+                if prev_pixdata[x, y][3] == 0:
+                    prev_alpha_sum += 1
+                if pixdata[x, y][3] == 0:
+                    curr_alpha_sum += 1
+
+
+        percent_diff = (curr_alpha_sum / prev_alpha_sum) * 100.0
+        if percent_diff > 109.0: # or percent_diff > 100.0: #percent
+            #print(f"{i} = {percent_diff:6.2f}%: Check Sum (Prev-{prev_alpha_sum} vs Curr-{curr_alpha_sum})")
+            disp_frame = Image.alpha_composite(previous_frame, current_frame)
+        else:
+            #print(f"\t{i} = {percent_diff:6.2f}%: Check Sum (Prev-{prev_alpha_sum} vs Curr-{curr_alpha_sum})")
+            disp_frame = current_frame.copy()
+   
+    pre_recolor = disp_frame.copy()
+
+    return disp_frame, pre_recolor
+
+def method_simple_recolor(current_frame : Image):
+    width, height = current_frame.size
+    pixdata = current_frame.load()
+    for x in range(width):
+        for y in range(height):
+            if pixdata[x,y][3] is 255:
+                pixdata[x,y] = black + (255,)
+            else:
+                pixdata[x,y] = white + (255,)
+    return current_frame
+
+def method_gather_colors(current_frame : Image, hitBlackLine = False, colorsToCheck = [transparent]):
+    current_frame = frames.convert('RGB')   
+    pixdata = current_frame.load()
+    width, height = current_frame.size
+    for x in range(0, width - 1):
+        for y in range(0, height - 1):
+            if hitBlackLine:
+                if pixdata[x,y] not in colorsToCheck:
+                    pixdata[x,y] = black
+                else:
+                    pixdata[x,y] = white
+            else:
+                if pixdata[x,y] <= (60,60,60):
+                    hitBlackLine = True
+                elif pixdata[x,y] not in colorsToCheck:
+                    colorsToCheck.append(pixdata[x,y])
+
+##########################################
+
 
 def main():
     print("Entered: {}".format(sys.argv))
@@ -121,9 +257,12 @@ def main():
     # If pokemon name is known
     else:
         frames = getGIFimage(sys.argv[1])
-    simpleCollage(frames)
+    print(frames.info)
+    simpleCollage(frames, 12, fit=True)
     GIFconvertBW(frames)
-    exit()
+
+    #import pdb; pdb.set_trace()
+
 
 
 

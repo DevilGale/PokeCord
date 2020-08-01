@@ -1,4 +1,4 @@
-from Config import *
+from config import *
 from Objects.PokeObj import *
 
 class User:
@@ -29,7 +29,7 @@ class User:
         return self._pokeList.keys()
     
     def addPokeList(self, value, user):
-        print(value)
+        #print(value)
         if value['name'] in self.pokeList.keys():
             self.pokeList[value['name']].append(PokeObj(value, user))
         else:
