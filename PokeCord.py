@@ -149,12 +149,13 @@ class PokeCord(commands.Cog):
         else:
             #Pokemon is ready for capture
             if self.appeared:
-                await self.check_capture(message)
+                if not await self.check_capture(message):
+                    return
                 if not self.setToSpawn():
                     self.time_to_spawn = datetime.now() + timedelta(minutes=random.randint(1,10))    
                     await message.channel.send('Pokemon set to spawn!')
                     await asyncio.sleep(self.getSeconds())
-                    await self._spawn(message.channel)
+                    await self._spawn()
             self.update_pickle()
 
     #     # [CHANGE] When a command is sent and a pokemon hasn't been set up it eats the command
@@ -169,12 +170,22 @@ class PokeCord(commands.Cog):
     #                   Commands
     #-------------------------------------------------
 
-    @commands.command(name='bind')
     @commands.is_owner()
+    @commands.command(name='bind',
+        usage='[channel_id]',
+        help="""Changes the channel the bot listens to. If no argument is given binds to current channel.
+        optional [channel_id] - will link the channel given, if permissible.
+        """
+        )
     async def cmd_bind(self, ctx, channel:discord.TextChannel = None):
-        if channel == None:
+        if channel == None and ctx.message.channel.type == discord.ChannelType.private:
+            await ctx.channel.send("Unable to bind to *direct messages*. Give *channel id* or give command in channel.")
+            return
+        elif channel == None:
             self.channel_bind[ctx.guild.id] = ctx.channel.id
         else:
+            if not channel.guild.me.permissions_in(channel).send_messages:
+                await ctx.channel.send(f"Unable to send messages in channel ({channel.name}) given")
             self.channel_bind[channel.guild.id] = channel.id
 
     @commands.command(name='info')
@@ -186,8 +197,8 @@ class PokeCord(commands.Cog):
         else:
             print(emoji)
 
-    @commands.command(name='edit_embed')
     @commands.is_owner()
+    @commands.command(name='edit_embed')
     async def cmd_edit_embed(self, cmd, message, content=None):
         msg_list = []
         find_message = await message.channel.send(content)
