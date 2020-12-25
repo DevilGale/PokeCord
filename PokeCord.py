@@ -24,7 +24,7 @@ class PokeCord(commands.Cog):
         self.channel_bind = {}
         self.time_to_spawn = None
         self.wild_pokemon = None #Spawned Pokemon
-        self.imgr_results = None
+        self.imgur_results = None
         self.spawn_msg = None
         self.trainer_list = {}
 
@@ -33,7 +33,7 @@ class PokeCord(commands.Cog):
             'channel_bind' : self.channel_bind,
             'time'         : self.time_to_spawn,
             'store'        : self.wild_pokemon,
-            'imgr'         : self.imgr_results,
+            'imgur'        : self.imgur_results,
             'msg'          : self.spawn_msg,
             'users'        : self.trainer_list
             })
@@ -43,7 +43,10 @@ class PokeCord(commands.Cog):
         self.channel_bind  = dictState['channel_bind']
         self.time_to_spawn = dictState['time']
         self.wild_pokemon  = dictState['store']
-        self.imgr_results  = dictState['imgr']
+        if 'imgr' in dictState:
+            self.imgur_results = dictState['imgr']
+        else:
+            self.imgur_results = dictState['imgur']
         self.spawn_msg     = dictState['msg']
         self.trainer_list  = dictState['users']
         # if self.time_to_spawn != None: 
@@ -240,7 +243,7 @@ class PokeCord(commands.Cog):
             new_embed = discord.Embed()
             for embed in self.spawn_msg.embeds:
                 new_embed = embed
-                new_embed.set_thumbnail(url=imgr_result)
+                new_embed.set_thumbnail(url=imgur_result)
             await client.edit_message(self.spawn_msg, embed=new_embed)
 
     @commands.command(
@@ -472,13 +475,13 @@ class PokeCord(commands.Cog):
             transparency=255,
             background=0
             )
-        #Upload to Imgr
+        #Upload to Imgur
         try:
-            self.imgr_result = config.imgr_client.upload_from_path(txtfile_name, config=None, anon=True)['link']
+            self.imgur_result = config.imgur_client.upload_from_path(txtfile_name, config=None, anon=True)['link']
         except Exception as Err:
             print(Err)
             raise Err
-        return self.imgr_result
+        return self.imgur_result
 
     async def wait_msg_delete(self, msg, after):
         await asyncio.sleep(after)
