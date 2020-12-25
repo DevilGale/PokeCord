@@ -13,9 +13,9 @@ transparent = (255, 255, 255) #0
 
 def getPokemon(val):
     url = "http://pokeapi.co/api/v2/pokemon/" + val + "/"
-    t0 = time.clock()
+    t0 = time.time()
     poke = requests.get(url).json()
-    print(f"Obtained Pokemon - {time.clock() - t0}")
+    print(f"Obtained Pokemon - {time.time() - t0}")
     return poke
 
 def getGIFimage(name):
@@ -28,7 +28,7 @@ def simpleCollage(frames, num_images_width : int = 5, num_images_height : int = 
     width, height = frames.size
     if fit:
         num_images_height = math.ceil(frames.n_frames / num_images_width)
-    print(f"Frames in image ({num_images_width}x{num_images_height}): {frames.n_frames} - {frames.filename}")
+    print(f"Frames in image ({num_images_width}x{num_images_height}): {frames.n_frames} - {frames.filename if frames.filename else 'N/A'}")
     compilation = Image.new('RGBA', size=(width * num_images_width, height * num_images_height))
     fnt = ImageFont.load_default().font
     last_dispose_method_2 = 0
@@ -157,11 +157,11 @@ def method_dispose(i, frames, previous_frame):
     current_frame = frames.convert()
 
     new_frame.alpha_composite(current_frame, dest=frames.dispose_extent[0:2], source=frames.dispose_extent)
-    if frames.disposal_method is 0:
+    if frames.disposal_method == 0:
         return new_frame, Image.new('RGBA', box=frames.size)
-    elif frames.disposal_method is 1:
+    elif frames.disposal_method == 1:
         return new_frame, new_frame.copy()
-    elif frames.disposal_method is 2 or frames.disposal_method is 3:
+    elif frames.disposal_method == 2 or frames.disposal_method == 3:
         draw = ImageDraw.Draw(previous_frame)
         draw.rectangle(frames.dispose_extent, fill=(white + (0,)))
         return new_frame, previous_frame.copy()
@@ -245,7 +245,7 @@ def method_gather_colors(current_frame : Image, hitBlackLine = False, colorsToCh
 
 
 def main():
-    print("Entered: {}".format(sys.argv))
+    print("Args Entered: {}".format(sys.argv))
     # If random pokemon wanted
     if len(sys.argv) == 1:
         poke = getPokemon(str(random.randint(1,200)))
