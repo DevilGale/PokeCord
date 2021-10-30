@@ -33,8 +33,14 @@ class PokeCord(commands.Cog):
         self.trainer_list = {}
 
     def __getstate__(self):
-        return {"channel_bind": self.channel_bind, "time": self.time_to_spawn, "store": self.wild_pokemon, "imgur": self.imgur_results, "msg": self.spawn_msg, "users": self.trainer_list}
-        pass
+        return {
+            "channel_bind": self.channel_bind,
+            "time": self.time_to_spawn,
+            "store": self.wild_pokemon,
+            "imgur": self.imgur_results,
+            "msg": self.spawn_msg,
+            "users": self.trainer_list,
+        }
 
     def __setstate__(self, dictState):
         self.channel_bind = dictState["channel_bind"]
