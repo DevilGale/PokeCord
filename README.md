@@ -10,13 +10,25 @@ Is a bot where every so often a pokemon spawns and has to be guessed to be caugh
 
 ### Installing
 
-Create your API secrets and input them into the '[var_secrets.py](var_secrets.py)' file, with the values enclosed in quotes.
+1. Create virtual environment `py -m venv venv && venv/Scripts/activate` _(optional but recommended)_
+
+2. Install dependencies: `pip install -r requirements.txt`
+
+3. Create a copy of `.env` and name it `.env.local`
+
+4. Create your API secrets and put them in `.env.local`
+
 - [imgur](https://api.imgur.com/oauth2/addclient)
 - [discord](https://discordpy.readthedocs.io/en/latest/discord.html)
 
-To install the dependencies for the project run `pip install -r requirements.txt`.
+Example `.env.local`:
 
-* **Note: the bot will still have to be added to the discord channel**
+> MASTER_ID = abcd1234
+>
+> CLIENT_ID = abcd1234
+> ...
+
+- **Note: the bot will still have to be added to the discord channel**
 
 ### Running
 
@@ -24,12 +36,13 @@ Run '[runbot.bat](runbot.bat)' after installing to start the bot.
 
 ## Built with
 
-* Windows 10 (Untested on Linux)
-* [discord.ext](https://discordpy.readthedocs.io/en/latest/ext/commands/index.html) - Interactions with Discord
-* [Pillow](https://pillow.readthedocs.io/en/stable/reference/Image.html) - Image Editing 
-* [imgurpython](https://github.com/Imgur/imgurpython) - Image Uploading
+- Windows 10 (Untested on Linux)
+- [discord.ext](https://discordpy.readthedocs.io/en/latest/ext/commands/index.html) - Interactions with Discord
+- [Pillow](https://pillow.readthedocs.io/en/stable/reference/Image.html) - Image Editing
+- [imgurpython](https://github.com/Imgur/imgurpython) - Image Uploading
 
 ## To-do
+
 - [x] Catch-able Pokemon
 - [ ] Admin Change spawn time
 - [ ] Limit which region is spawned

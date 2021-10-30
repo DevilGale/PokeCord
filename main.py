@@ -1,11 +1,9 @@
+import env
 import sys
 from pathlib import Path
 import config
-from var_secrets import TOKEN
 from PokeCord import *
-
 import pickle
-
 from datetime import timedelta, datetime
 
 # Checking folders exist
@@ -77,4 +75,4 @@ async def cmd_shutdown(context):
 
 
 print(f"[{datetime.now().strftime('%b-%d %H:%M')}] Start Bot")
-bot.run(TOKEN)
+bot.run(env.get("TOKEN"))

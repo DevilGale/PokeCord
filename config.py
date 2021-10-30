@@ -1,4 +1,4 @@
-from var_secrets import imgur_client_id, imgur_client_secret
+import env
 
 import os
 import json
@@ -27,7 +27,7 @@ class bcolors:
 
 # Globals #
 
-imgur_client = ImgurClient(imgur_client_id, imgur_client_secret)
+imgur_client = ImgurClient(env.get("imgur_client_id"), env.get("imgur_client_secret"))
 
 # Image Vars #
 white = (255,255,255)

@@ -5,5 +5,5 @@ IO\ Files/*
 __pycache__
 *.lnk
 *.cmd
-var_secrets.py
-venv/*
+venv/
+.env.local
