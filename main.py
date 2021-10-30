@@ -1,12 +1,6 @@
-import sys
+import env, log, sys, config, pickle
 from pathlib import Path
-import config
-from var_secrets import TOKEN
 from PokeCord import *
-
-import pickle
-
-from datetime import timedelta, datetime
 
 # Checking folders exist
 if not os.path.isdir("IO Files/"):
@@ -25,8 +19,8 @@ bot = commands.Bot(command_prefix=config.BOT_PREFIX)
 
 @bot.event
 async def on_connect():
-    print('~~~~~~~~~~~~')
-    print(f"[{datetime.now().strftime('%b-%d %H:%M')}] Logged in as {bot.user.name}(ID: {bot.user.id})")
+    log.separator()
+    log.info(f"Logged in as {bot.user.name}(ID: {bot.user.id})")
     if os.path.isfile("IO Files/PokeCord.pickle"):
         with open("IO Files/PokeCord.pickle", 'rb') as file:
             try:
@@ -48,7 +42,7 @@ async def on_connect():
 
 @bot.event
 async def on_command(context):
-    print(f"[{datetime.now().strftime('%b-%d %H:%M')}]: '{context.command}' by {context.author}")
+    log.info(f"'{context.command}' by {context.author}")
     pass
 
 @bot.event
@@ -75,6 +69,5 @@ async def cmd_restart(ctx):
 async def cmd_shutdown(context):
     await bot.close()
 
-
-print(f"[{datetime.now().strftime('%b-%d %H:%M')}] Start Bot")
-bot.run(TOKEN)
+log.info("Start Bot")
+bot.run(env.get("TOKEN"))

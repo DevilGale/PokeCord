@@ -6,6 +6,7 @@ from Objects.user import *
 import random
 from datetime import time, datetime, timedelta
 
+import log
 import pickle
 import requests
 from PIL import Image, ImageDraw
@@ -109,14 +110,14 @@ class PokeCord(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         for guild in self.bot.guilds:
-            print(f"Access to - {guild.name}")
+            log.info(f"Access to - {guild.name}")
             if guild.id not in self.channel_bind:
                 for channel in guild.text_channels:
-                    print(f"{channel.name} - {guild.me.permissions_in(channel)}") # send_messages
+                    log.info(f"{channel.name} - {guild.me.permissions_in(channel)}") # send_messages
                     if guild.me.permissions_in(channel).send_messages:
                         self.channel_bind[guild.id] = channel.id
                         break
-                    print(f"{(guild.me.permissions_in(channel).send_messages)}")
+                    log.info(f"{(guild.me.permissions_in(channel).send_messages)}")
                     #self.channel_bind[guild.id] = channels[0]
         #Check if a pokemon is queued to be spawned
         if self.appeared:
