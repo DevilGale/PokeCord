@@ -1,22 +1,23 @@
 from config import *
 from Objects.PokeObj import *
 
+
 class User:
     def __init__(self, user, poke):
         self.user = user.id
-        self.pokeList = {poke['name'] : [PokeObj(poke, user)]}
+        self.pokeList = {poke["name"]: [PokeObj(poke, user)]}
         self.items = []
 
     def __repr__(self):
         prnt_str = "__{}'s Pokemon__: include **{}/802** Pokemon:\n".format(self.user.name, len(self.pokeList.keys()))
         for PokeName in self.pokeList.keys():
-            prnt_str += "{} *x{}*\n".format(PokeName.capitalize(),len(self.pokeList[PokeName]))
+            prnt_str += "{} *x{}*\n".format(PokeName.capitalize(), len(self.pokeList[PokeName]))
         return prnt_str
 
     @property
     def items(self):
         return self._items
-    
+
     @items.setter
     def items(self, value):
         print(value)
@@ -27,13 +28,13 @@ class User:
 
     def getPokeList(self):
         return self._pokeList.keys()
-    
+
     def addPokeList(self, value, user):
-        #print(value)
-        if value['name'] in self.pokeList.keys():
-            self.pokeList[value['name']].append(PokeObj(value, user))
+        # print(value)
+        if value["name"] in self.pokeList.keys():
+            self.pokeList[value["name"]].append(PokeObj(value, user))
         else:
-            self.pokeList[value['name']] = [PokeObj(value, user)]
+            self.pokeList[value["name"]] = [PokeObj(value, user)]
 
     def removePokemon(self, name):
         if name in self.pokeList.keys():
@@ -59,7 +60,7 @@ class User:
         embed = discord.Embed(type="rich", title=str_title, color=0xEEE8AA)
         str_desc = ""
         for PokeName in self.pokeList.keys():
-            str_desc += "{} *x{}*\n".format(PokeName.capitalize(),len(self.pokeList[PokeName]))
-        embed.description = str_desc[:2048 - len(str_title + str_footer)]
+            str_desc += "{} *x{}*\n".format(PokeName.capitalize(), len(self.pokeList[PokeName]))
+        embed.description = str_desc[: 2048 - len(str_title + str_footer)]
         embed.set_footer(text=str_footer)
         return embed
