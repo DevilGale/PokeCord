@@ -38,9 +38,13 @@ def separator():
 
 def info(*args, **kwargs):
     if level >= LEVEL.INFO:
-        print(f"[{datetime.now().strftime('%b-%d %H:%M')}] INFO", *args, **kwargs)
+        print(f"[{datetime.now().strftime('%b-%d %H:%M')} INFO]", *args, **kwargs)
+
+
+def debug(*args, **kwargs):
+    if level >= LEVEL.DEBUG:
+        print(f"[DEBUG]", *args, **kwargs)
 
 
 # def error()
 # def warn()
-# def debug()
