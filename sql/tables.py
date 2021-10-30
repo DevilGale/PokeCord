@@ -23,15 +23,16 @@ class Pokemon(Base):
     type2 = Column(String, default=None)
     image_path = Column(String) # Path to image
 
-    def fromJson(self, pokemonDetails) -> Pokemon:
+    @staticmethod
+    def fromJson(pokemonDetails):
         sqlPokemon = Pokemon(
             id=pokemonDetails['id'],
             pokemon=pokemonDetails['name'],
             type=pokemonDetails['types'][0]['type']['name'],
             image_path=None
         )
-        if len(pokemonDetails.details['types']) == 2:
-            sqlPokemon.type2 = pokemonDetails.details['types'][1]['type']['name']
+        if len(pokemonDetails['types']) == 2:
+            sqlPokemon.type2 = pokemonDetails['types'][1]['type']['name']
 
         return sqlPokemon
 
@@ -52,10 +53,10 @@ class PokemonMapping(Base):
     level = Column(Integer, default=5)
     exp = Column(Integer, default=0)
     nickname = Column(String, default=None)
-    move1 = Column(Integer, ForeignKey(Moves.id))
-    move2 = Column(Integer, ForeignKey(Moves.id))
-    move3 = Column(Integer, ForeignKey(Moves.id))
-    move4 = Column(Integer, ForeignKey(Moves.id))
+    move1 = Column(Integer, ForeignKey(Moves.id), default=None)
+    move2 = Column(Integer, ForeignKey(Moves.id), default=None)
+    move3 = Column(Integer, ForeignKey(Moves.id), default=None)
+    move4 = Column(Integer, ForeignKey(Moves.id), default=None)
 
 class ItemMapping(Base):
     __tablename__ = 'item_mapping'
