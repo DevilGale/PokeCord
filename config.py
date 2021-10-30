@@ -11,7 +11,7 @@ from imgurpython import ImgurClient #swap to pyimgur in the future
 # DISCORD  VARS #
 #client = discord.Client()
 
-BOT_PREFIX = ";"
+BOT_PREFIX = env.get("BOT_PREFIX")
 CHANNEL_IDs  = ("449281327988998156")
 
 # PYTHON VALS #

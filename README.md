@@ -10,7 +10,7 @@ Is a bot where every so often a pokemon spawns and has to be guessed to be caugh
 
 ### Installing
 
-1. Create virtual environment `py -m venv venv && venv/Scripts/activate` _(optional but recommended)_
+1. Create virtual environment `py -m venv venv && venv/Scripts/activate`
 
 2. Install dependencies: `pip install -r requirements.txt`
 
@@ -19,11 +19,15 @@ Is a bot where every so often a pokemon spawns and has to be guessed to be caugh
 4. Create your API secrets and put them in `.env.local`
 
 - [imgur](https://api.imgur.com/oauth2/addclient)
+  - Application name: `PokeCord` (can be whatever you want)
+  - Authorization type: `OAuth 2 authorization with a callback URL`
+  - Authorization callback URL: `https://imgur.com`
+  - On submit, edit `imgr_client_id` and `imgr_client_secret`
 - [discord](https://discordpy.readthedocs.io/en/latest/discord.html)
 
 Example `.env.local`:
 
-> MASTER_ID = abcd1234
+> MASTER_ID = "abcd#1234"
 >
 > CLIENT_ID = abcd1234
 > ...
@@ -33,6 +37,8 @@ Example `.env.local`:
 ### Running
 
 Run '[runbot.bat](runbot.bat)' after installing to start the bot.
+
+- If you're using virtualenv: `py main.py`
 
 ## Built with
 
