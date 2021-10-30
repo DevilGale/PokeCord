@@ -8,7 +8,7 @@ Base = declarative_base()
 class Trainer(Base):
     __tablename__ = 'trainer'
     id = Column(String, primary_key=True) # Discord ID of User
-    pokemon = relationship('PokemonMapping', back_populates='pokemon')
+    pokemon = relationship('PokemonMapping', backref='trainer')
 
 class Moves(Base):
     __tablename__ = 'moves'
@@ -17,36 +17,37 @@ class Moves(Base):
 
 class Pokemon(Base):
     __tablename__ = 'pokemon'
-    id = Column(int, primary_key=True)
+    id = Column(Integer, primary_key=True)
     pokemon = Column(String(length=32))
     type = Column(String)
     type2 = Column(String, default=None)
     image_path = Column(String) # Path to image
 
-    def fromJson(self, requestJson):
-        pokeObj = Pokemon(
-            id=requestJson['id'],
-            pokemon=requestJson['name'],
-            type=requestJson['types'][0]['type']['name'],
-            type2=requestJson['types'][1]['type']['name'] if len(requestJson['types'])==2 else None,
+    def fromJson(self, pokemonDetails) -> Pokemon:
+        sqlPokemon = Pokemon(
+            id=pokemonDetails['id'],
+            pokemon=pokemonDetails['name'],
+            type=pokemonDetails['types'][0]['type']['name'],
             image_path=None
         )
-        session.add(pokeObj)
-        session.commit()
+        if len(pokemonDetails.details['types']) == 2:
+            sqlPokemon.type2 = pokemonDetails.details['types'][1]['type']['name']
+
+        return sqlPokemon
 
 class PokeCord(Base):
     __tablename__ = 'pokecord'
     discord_server = Column(String, primary_key=True) 
     channel_bind = Column(String)                     # Channel to post in
     message_id = Column(String)                       # Message with the wild pokemon
-    wild_pokemon = Column(id, ForeignKey(Pokemon.id)) # Pokemon that appeared
+    wild_pokemon = Column(Integer, ForeignKey(Pokemon.id)) # Pokemon that appeared
     appear_time = Column(DateTime)                    # Time to appear
 
 class PokemonMapping(Base):
     __tablename__ = 'pokemon_mapping'
-    id = Column(int, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     obtained = Column(DateTime, default=datetime.today())
-    trainer = Column(String, ForeignKey(Trainer.id))
+    trainer_id = Column(String, ForeignKey(Trainer.id))
     pokemon = Column(Integer, ForeignKey(Pokemon.id))
     level = Column(Integer, default=5)
     exp = Column(Integer, default=0)
