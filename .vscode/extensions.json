@@ -1,3 +1,6 @@
 {
-  "recommendations": ["mikestead.dotenv"]
+  "recommendations": [
+    "mikestead.dotenv",
+    "ms-python.python"
+  ]
 }
