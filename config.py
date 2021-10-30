@@ -1,4 +1,4 @@
-from var_secrets import imgur_client_id, imgur_client_secret
+import env
 
 import os
 import json
@@ -11,7 +11,7 @@ from imgurpython import ImgurClient #swap to pyimgur in the future
 # DISCORD  VARS #
 #client = discord.Client()
 
-BOT_PREFIX = ";"
+BOT_PREFIX = env.get("BOT_PREFIX")
 CHANNEL_IDs  = ("449281327988998156")
 
 # PYTHON VALS #
@@ -27,7 +27,7 @@ class bcolors:
 
 # Globals #
 
-imgur_client = ImgurClient(imgur_client_id, imgur_client_secret)
+imgur_client = ImgurClient(env.get("imgur_client_id"), env.get("imgur_client_secret"))
 
 # Image Vars #
 white = (255,255,255)
