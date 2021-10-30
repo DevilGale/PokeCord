@@ -379,7 +379,7 @@ class PokeCord(commands.Cog):
         else:
             t0 = datetime.now()
             self.wild_pokemon = requests.post(url).json()
-            log.info(f"Obtained Pokemon in {datetime.now() - t0}")
+            print(f"Obtained Pokemon - {datetime.now() - t0}")
             with open(f"IO Files/Pokemon/Pokemon#{self.wild_pokemon['id']}", 'w') as file:
                 json.dump(self.wild_pokemon, file)
 
